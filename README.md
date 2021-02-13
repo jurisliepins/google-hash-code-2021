@@ -1,1 +1,1 @@
-# google_hash_code_2021
+# google-hash-code-2021
