@@ -12,14 +12,14 @@ import (
 	"strings"
 )
 
-func max(x int , y int) int {
+func max(x int, y int) int {
 	if x > y {
 		return x
 	}
 	return y
 }
 
-func min(x int , y int) int {
+func min(x int, y int) int {
 	if x < y {
 		return x
 	}
@@ -27,16 +27,16 @@ func min(x int , y int) int {
 }
 
 type Problem struct {
-	M  int
-	T2 int
-	T3 int
-	T4 int
-	P  [][]string
+	M  int        // Number of pizzas.
+	T2 int        // Number of 2 person teams.
+	T3 int        // Number of 3 person teams.
+	T4 int        // Number of 4 person teams.
+	P  [][]string // Pizza ingredients.
 }
 
 type Delivery struct {
-	T int
-	P []int
+	T int   // Number of people in the team.
+	P []int // Pizza indexes for that team.
 }
 type Solution struct {
 	D []Delivery
@@ -116,255 +116,56 @@ func write(filename string, solution Solution) {
 	}
 }
 
-func solve_First(problem Problem) Solution {
-	solution := Solution{
-		D: make([]Delivery, 0),
-	}
-
-	U := make(map[int]struct{})
-
-	for i := 0; i < problem.T4; i++ {
-		D := Delivery{
-			T: 4,
-			P: make([]int, 0),
-		}
-		M := make(map[int]struct{})
-		for p := 0; p < problem.M; p++ {
-			if _, ok := U[p]; ok {
-				continue
-			}
-			if _, ok := M[p]; ok {
-				continue
-			}
-
-			D.P = append(D.P, p)
-			M[p] = struct{}{}
-
-			if len(M) >= 4 {
-				break
-			}
-		}
-
-		if len(D.P) == 4 {
-			for k, v := range M {
-				U[k] = v
-			}
-			solution.D = append(solution.D, D)
-		}
-	}
-
-	for i := 0; i < problem.T3; i++ {
-		D := Delivery{
-			T: 3,
-			P: make([]int, 0),
-		}
-		M := make(map[int]struct{})
-		for p := 0; p < problem.M; p++ {
-			if _, ok := U[p]; ok {
-				continue
-			}
-			if _, ok := M[p]; ok {
-				continue
-			}
-
-			D.P = append(D.P, p)
-			M[p] = struct{}{}
-
-			if len(M) >= 3 {
-				break
-			}
-		}
-
-		if len(D.P) == 3 {
-			for k, v := range M {
-				U[k] = v
-			}
-			solution.D = append(solution.D, D)
-		}
-	}
-
-	for i := 0; i < problem.T2; i++ {
-		D := Delivery{
-			T: 2,
-			P: make([]int, 0),
-		}
-		M := make(map[int]struct{})
-		for p := 0; p < problem.M; p++ {
-			if _, ok := U[p]; ok {
-				continue
-			}
-			if _, ok := M[p]; ok {
-				continue
-			}
-
-			D.P = append(D.P, p)
-			M[p] = struct{}{}
-
-			if len(M) >= 2 {
-				break
-			}
-		}
-
-		if len(D.P) == 2 {
-			for k, v := range M {
-				U[k] = v
-			}
-			solution.D = append(solution.D, D)
-		}
-	}
-
-	return solution
-}
-
-func solve_FrequencyTable(problem Problem) Solution {
-	solution := Solution{
-		D: make([]Delivery, 0),
-	}
-
-	If := make(map[string]int)
-	Pf := make(map[int]int)
-
-	P := problem.P
-	for _, p := range P {
-		I := p
-		for _, i := range I {
-			If[i] += 1
-		}
-
-	}
-	for idx, p := range P {
-		I := p
-		S := 0
-		for _, i := range I {
-			S += If[i]
-		}
-		Pf[idx] = S
-	}
-
-	K := make([]struct {
-		P int
-		F int
-	}, len(Pf))
-	for idx, pf := range Pf {
-		K[idx].P = idx
-		K[idx].F = pf
-	}
-	sort.Slice(K, func(i, j int) bool {
-		f1 := K[i].F
-		f2 := K[j].F
-		return f1 < f2
-	})
-
-	H := 0
-
-	for idx := 0; idx < problem.T4; idx++ {
-		D := Delivery{
-			T: 4,
-			P: make([]int, 0),
-		}
-
-		Hmax := min(H + 4, len(K))
-		for H < Hmax {
-			D.P = append(D.P, K[H].P)
-			H++
-		}
-
-		if len(D.P) == 4 {
-			solution.D = append(solution.D, D)
-		}
-	}
-
-	for idx := 0; idx < problem.T3; idx++ {
-		D := Delivery{
-			T: 3,
-			P: make([]int, 0),
-		}
-
-		Hmax := min(H + 3, len(K))
-		for H < Hmax {
-			D.P = append(D.P, K[H].P)
-			H++
-		}
-
-		if len(D.P) == 3 {
-			solution.D = append(solution.D, D)
-		}
-	}
-
-	for idx := 0; idx < problem.T2; idx++ {
-		D := Delivery{
-			T: 2,
-			P: make([]int, 0),
-		}
-
-		Hmax := min(H + 2, len(K))
-		for H < Hmax {
-			D.P = append(D.P, K[H].P)
-			H++
-		}
-
-		if len(D.P) == 2 {
-			solution.D = append(solution.D, D)
-		}
-	}
-
-	return solution
-}
-
 func solve_MostIngredients(problem Problem) Solution {
+	// Assigns pizzas with the most number of ingredients to larger teams first.
 	solution := Solution{
 		D: make([]Delivery, 0),
 	}
-
-	C := make(map[int]int)
-
-	P := problem.P
-	for idx, p := range P {
-		C[idx] = len(p)
-	}
-
-	K := make([]struct {
+	// P - pizza ID, C - number of ingredients on that pizza.
+	C := make([]struct {
 		P int
-		c int
-	}, len(C))
-	for idx, c := range C {
-		K[idx].P = idx
-		K[idx].c = c
+		C int
+	}, len(problem.P))
+	for idx, p := range problem.P {
+		C[idx].P = idx
+		C[idx].C = len(p)
 	}
-	sort.Slice(K, func(i, j int) bool {
-		c1 := K[i].c
-		c2 := K[j].c
+	// Sort C on pizza ingredient count in descending order.
+	sort.Slice(C, func(i, j int) bool {
+		c1 := C[i].C
+		c2 := C[j].C
 		return c1 > c2
 	})
 
+	// Total number of pizzas delivered.
 	H := 0
-
+	// Iterate over the 4 person team and deliver pizzas with many of ingredients first.
 	for idx := 0; idx < problem.T4; idx++ {
 		D := Delivery{
 			T: 4,
 			P: make([]int, 0),
 		}
-
-		Hmax := min(H + 4, len(K))
+		// Check for when we have fewer pizzas left than the team requires.
+		Hmax := min(H+4, len(C))
 		for H < Hmax {
-			D.P = append(D.P, K[H].P)
+			D.P = append(D.P, C[H].P)
 			H++
 		}
-
+		// Check that each team member will receive a pizza or the whole team doesn't get any pizzas.
 		if len(D.P) == 4 {
 			solution.D = append(solution.D, D)
 		}
 	}
-
+	// Same but for 3 person team.
 	for idx := 0; idx < problem.T3; idx++ {
 		D := Delivery{
 			T: 3,
 			P: make([]int, 0),
 		}
 
-		Hmax := min(H + 3, len(K))
+		Hmax := min(H+3, len(C))
 		for H < Hmax {
-			D.P = append(D.P, K[H].P)
+			D.P = append(D.P, C[H].P)
 			H++
 		}
 
@@ -372,16 +173,16 @@ func solve_MostIngredients(problem Problem) Solution {
 			solution.D = append(solution.D, D)
 		}
 	}
-
+	// Same but for 2 person team.
 	for idx := 0; idx < problem.T2; idx++ {
 		D := Delivery{
 			T: 2,
 			P: make([]int, 0),
 		}
 
-		Hmax := min(H + 2, len(K))
+		Hmax := min(H+2, len(C))
 		for H < Hmax {
-			D.P = append(D.P, K[H].P)
+			D.P = append(D.P, C[H].P)
 			H++
 		}
 
@@ -394,8 +195,6 @@ func solve_MostIngredients(problem Problem) Solution {
 }
 
 func initialSolution(problem Problem) Solution {
-	//return solve_First(problem
-	//return solve_FrequencyTable(problem)
 	return solve_MostIngredients(problem)
 }
 
@@ -404,47 +203,50 @@ func solve_Anneal(problem Problem) Solution {
 
 	Tmax := 100.0
 	Tmin := 0.5
-	Ti   := Tmax
+	// Current temperature.
+	Ti := Tmax
 
 	for Ti > Tmin {
+		// Score before random swaps.
 		S1 := score(problem, solution)
-
+		// Total number of deliveries.
 		Dl := len(solution.D)
+		// Pick 2 random deliveries indexes to swap.
+		Didx1 := rand.Intn(Dl)
+		Didx2 := rand.Intn(Dl)
+		// Numbers of pizzas in each delivery.
+		Pl1 := len(solution.D[Didx1].P)
+		Pl2 := len(solution.D[Didx2].P)
+		// Random pizza indexes from each delivery to swap.
+		Pidx1 := rand.Intn(Pl1)
+		Pidx2 := rand.Intn(Pl2)
+		// Swap 2 pizzas.
+		P1 := solution.D[Didx1].P[Pidx1]
+		P2 := solution.D[Didx2].P[Pidx2]
 
-		D1 := rand.Intn(Dl)
-		D2 := rand.Intn(Dl)
-
-		Pl1 := len(solution.D[D1].P)
-		Pl2 := len(solution.D[D2].P)
-
-		P1 := rand.Intn(Pl1)
-		P2 := rand.Intn(Pl2)
-
-		Pt1 := solution.D[D1].P[P1]
-		Pt2 := solution.D[D2].P[P2]
-
-		solution.D[D1].P[P1] = Pt2
-		solution.D[D2].P[P2] = Pt1
-
+		solution.D[Didx1].P[Pidx1] = P2
+		solution.D[Didx2].P[Pidx2] = P1
+		// Get the resulting score.
 		S2 := score(problem, solution)
 
 		Sdelta := S1 - S2
 
 		if Sdelta <= 0 {
-			// Score is higher so that's what we want.
+			// The original score was smaller than what we got after the swap, so keep the current state.
 		} else {
+			// Got a lower score than we started with, so decide if we still want to keep it.
 			P := math.Exp(float64(-Sdelta) / Ti)
 			R := rand.Float64()
 
 			if R <= P {
-				// Still want to transition.
+				// Still want to swap.
 			} else {
-				// Put back the original pizzas.
-				solution.D[D1].P[P1] = Pt1
-				solution.D[D2].P[P2] = Pt2
+				// Put back original pizzas.
+				solution.D[Didx1].P[Pidx1] = P1
+				solution.D[Didx2].P[Pidx2] = P2
 			}
 		}
-
+		// Decrease the temperature.
 		Ti = Ti - (Ti * 0.001)
 
 		log.Printf("S=%d Ti=%f", score(problem, solution), Ti)
@@ -454,26 +256,27 @@ func solve_Anneal(problem Problem) Solution {
 }
 
 func validate(problem Problem, solution Solution) {
-	U := make(map[int]struct{})
+	// Map of all delivered pizzas.
+	D := make(map[int]struct{})
 
 	for _, d := range solution.D {
 		T := d.T
 		P := d.P
 
 		if T != len(P) {
-			log.Fatalf("%d person team received %d pizzas", T, len(P))
+			log.Fatalf("%d person team received %d pizzas (each team member must receive a pizza)", T, len(P))
 		}
 
 		for _, p := range P {
-			if _, ok := U[p]; ok {
+			if _, ok := D[p]; ok {
 				log.Fatalf("Pizza %d has already been delivered", p)
 			}
-			U[p] = struct{}{}
+			D[p] = struct{}{}
 		}
 	}
 
-	if len(U) > problem.M {
-		log.Fatalf("Delivered %d pizzas, %d actually exist", len(U), problem.M)
+	if len(D) > problem.M {
+		log.Fatalf("Delivered more pizzas than actually exist %d vs %d", len(D), problem.M)
 	}
 
 	log.Printf("Validation success!")
@@ -483,15 +286,15 @@ func score(problem Problem, solution Solution) int64 {
 	S := int64(0)
 
 	for _, d := range solution.D {
-		P := d.P
+		// Map of unique ingredients for a given delivery.
 		I := make(map[string]struct{})
 
-		for _, p := range P {
+		for _, p := range d.P {
 			for _, i := range problem.P[p] {
 				I[i] = struct{}{}
 			}
 		}
-
+		// Score is the total number of unique ingredients squared.
 		L := len(I)
 		S += int64(L * L)
 	}
