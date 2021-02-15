@@ -4,10 +4,27 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
+	"math/rand"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
+
+func max(x int , y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func min(x int , y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
 
 type Problem struct {
 	M  int
@@ -99,16 +116,16 @@ func write(filename string, solution Solution) {
 	}
 }
 
-func solve_GetFirst(problem Problem) Solution {
+func solve_First(problem Problem) Solution {
 	solution := Solution{
 		D: make([]Delivery, 0),
 	}
 
 	U := make(map[int]struct{})
 
-	for i := 0; i < problem.T2; i++ {
+	for i := 0; i < problem.T4; i++ {
 		D := Delivery{
-			T: 2,
+			T: 4,
 			P: make([]int, 0),
 		}
 		M := make(map[int]struct{})
@@ -123,12 +140,12 @@ func solve_GetFirst(problem Problem) Solution {
 			D.P = append(D.P, p)
 			M[p] = struct{}{}
 
-			if len(M) >= 2 {
+			if len(M) >= 4 {
 				break
 			}
 		}
 
-		if len(D.P) == 2 {
+		if len(D.P) == 4 {
 			for k, v := range M {
 				U[k] = v
 			}
@@ -166,9 +183,9 @@ func solve_GetFirst(problem Problem) Solution {
 		}
 	}
 
-	for i := 0; i < problem.T4; i++ {
+	for i := 0; i < problem.T2; i++ {
 		D := Delivery{
-			T: 4,
+			T: 2,
 			P: make([]int, 0),
 		}
 		M := make(map[int]struct{})
@@ -183,17 +200,254 @@ func solve_GetFirst(problem Problem) Solution {
 			D.P = append(D.P, p)
 			M[p] = struct{}{}
 
-			if len(M) >= 4 {
+			if len(M) >= 2 {
 				break
 			}
 		}
 
-		if len(D.P) == 4 {
+		if len(D.P) == 2 {
 			for k, v := range M {
 				U[k] = v
 			}
 			solution.D = append(solution.D, D)
 		}
+	}
+
+	return solution
+}
+
+func solve_FrequencyTable(problem Problem) Solution {
+	solution := Solution{
+		D: make([]Delivery, 0),
+	}
+
+	If := make(map[string]int)
+	Pf := make(map[int]int)
+
+	P := problem.P
+	for _, p := range P {
+		I := p
+		for _, i := range I {
+			If[i] += 1
+		}
+
+	}
+	for idx, p := range P {
+		I := p
+		S := 0
+		for _, i := range I {
+			S += If[i]
+		}
+		Pf[idx] = S
+	}
+
+	K := make([]struct {
+		P int
+		F int
+	}, len(Pf))
+	for idx, pf := range Pf {
+		K[idx].P = idx
+		K[idx].F = pf
+	}
+	sort.Slice(K, func(i, j int) bool {
+		f1 := K[i].F
+		f2 := K[j].F
+		return f1 < f2
+	})
+
+	H := 0
+
+	for idx := 0; idx < problem.T4; idx++ {
+		D := Delivery{
+			T: 4,
+			P: make([]int, 0),
+		}
+
+		Hmax := min(H + 4, len(K))
+		for H < Hmax {
+			D.P = append(D.P, K[H].P)
+			H++
+		}
+
+		if len(D.P) == 4 {
+			solution.D = append(solution.D, D)
+		}
+	}
+
+	for idx := 0; idx < problem.T3; idx++ {
+		D := Delivery{
+			T: 3,
+			P: make([]int, 0),
+		}
+
+		Hmax := min(H + 3, len(K))
+		for H < Hmax {
+			D.P = append(D.P, K[H].P)
+			H++
+		}
+
+		if len(D.P) == 3 {
+			solution.D = append(solution.D, D)
+		}
+	}
+
+	for idx := 0; idx < problem.T2; idx++ {
+		D := Delivery{
+			T: 2,
+			P: make([]int, 0),
+		}
+
+		Hmax := min(H + 2, len(K))
+		for H < Hmax {
+			D.P = append(D.P, K[H].P)
+			H++
+		}
+
+		if len(D.P) == 2 {
+			solution.D = append(solution.D, D)
+		}
+	}
+
+	return solution
+}
+
+func solve_MostIngredients(problem Problem) Solution {
+	solution := Solution{
+		D: make([]Delivery, 0),
+	}
+
+	C := make(map[int]int)
+
+	P := problem.P
+	for idx, p := range P {
+		C[idx] = len(p)
+	}
+
+	K := make([]struct {
+		P int
+		c int
+	}, len(C))
+	for idx, c := range C {
+		K[idx].P = idx
+		K[idx].c = c
+	}
+	sort.Slice(K, func(i, j int) bool {
+		c1 := K[i].c
+		c2 := K[j].c
+		return c1 > c2
+	})
+
+	H := 0
+
+	for idx := 0; idx < problem.T4; idx++ {
+		D := Delivery{
+			T: 4,
+			P: make([]int, 0),
+		}
+
+		Hmax := min(H + 4, len(K))
+		for H < Hmax {
+			D.P = append(D.P, K[H].P)
+			H++
+		}
+
+		if len(D.P) == 4 {
+			solution.D = append(solution.D, D)
+		}
+	}
+
+	for idx := 0; idx < problem.T3; idx++ {
+		D := Delivery{
+			T: 3,
+			P: make([]int, 0),
+		}
+
+		Hmax := min(H + 3, len(K))
+		for H < Hmax {
+			D.P = append(D.P, K[H].P)
+			H++
+		}
+
+		if len(D.P) == 3 {
+			solution.D = append(solution.D, D)
+		}
+	}
+
+	for idx := 0; idx < problem.T2; idx++ {
+		D := Delivery{
+			T: 2,
+			P: make([]int, 0),
+		}
+
+		Hmax := min(H + 2, len(K))
+		for H < Hmax {
+			D.P = append(D.P, K[H].P)
+			H++
+		}
+
+		if len(D.P) == 2 {
+			solution.D = append(solution.D, D)
+		}
+	}
+
+	return solution
+}
+
+func initialSolution(problem Problem) Solution {
+	//return solve_First(problem
+	//return solve_FrequencyTable(problem)
+	return solve_MostIngredients(problem)
+}
+
+func solve_Anneal(problem Problem) Solution {
+	solution := initialSolution(problem)
+
+	Tmax := 100.0
+	Tmin := 0.5
+	Ti   := Tmax
+
+	for Ti > Tmin {
+		S1 := score(problem, solution)
+
+		Dl := len(solution.D)
+
+		D1 := rand.Intn(Dl)
+		D2 := rand.Intn(Dl)
+
+		Pl1 := len(solution.D[D1].P)
+		Pl2 := len(solution.D[D2].P)
+
+		P1 := rand.Intn(Pl1)
+		P2 := rand.Intn(Pl2)
+
+		Pt1 := solution.D[D1].P[P1]
+		Pt2 := solution.D[D2].P[P2]
+
+		solution.D[D1].P[P1] = Pt2
+		solution.D[D2].P[P2] = Pt1
+
+		S2 := score(problem, solution)
+
+		Sdelta := S1 - S2
+
+		if Sdelta <= 0 {
+			// Score is higher so that's what we want.
+		} else {
+			P := math.Exp(float64(-Sdelta) / Ti)
+			R := rand.Float64()
+
+			if R <= P {
+				// Still want to transition.
+			} else {
+				// Put back the original pizzas.
+				solution.D[D1].P[P1] = Pt1
+				solution.D[D2].P[P2] = Pt2
+			}
+		}
+
+		Ti = Ti - (Ti * 0.001)
+
+		log.Printf("S=%d Ti=%f", score(problem, solution), Ti)
 	}
 
 	return solution
@@ -225,8 +479,8 @@ func validate(problem Problem, solution Solution) {
 	log.Printf("Validation success!")
 }
 
-func score(problem Problem, solution Solution) {
-	score := uint64(0)
+func score(problem Problem, solution Solution) int64 {
+	S := int64(0)
 
 	for _, d := range solution.D {
 		P := d.P
@@ -239,68 +493,66 @@ func score(problem Problem, solution Solution) {
 		}
 
 		L := len(I)
-
-		score += uint64(L * L)
+		S += int64(L * L)
 	}
 
-	log.Printf("Score %d!", score)
+	return S
 }
 
 func solveA() {
 	problem := read("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\input\\a_example.in")
-	solution := solve_GetFirst(problem)
-
-	//log.Printf("%v", solution)
+	solution := solve_Anneal(problem)
 
 	validate(problem, solution)
-	score(problem, solution)
+	log.Printf("Score %d!", score(problem, solution))
+
 	write("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\output\\a_example.out", solution)
 }
 
 func solveB() {
 	problem := read("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\input\\b_little_bit_of_everything.in")
-	solution := solve_GetFirst(problem)
+	solution := solve_Anneal(problem)
 
 	validate(problem, solution)
-	score(problem, solution)
+	log.Printf("Score %d!", score(problem, solution))
 
 	write("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\output\\b_little_bit_of_everything.out", solution)
 }
 
 func solveC() {
 	problem := read("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\input\\c_many_ingredients.in")
-	solution := solve_GetFirst(problem)
+	solution := solve_Anneal(problem)
 
 	validate(problem, solution)
-	score(problem, solution)
+	log.Printf("Score %d!", score(problem, solution))
 
 	write("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\output\\c_many_ingredients.out", solution)
 }
 
 func solveD() {
 	problem := read("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\input\\d_many_pizzas.in")
-	solution := solve_GetFirst(problem)
+	solution := solve_Anneal(problem)
 
 	validate(problem, solution)
-	score(problem, solution)
+	log.Printf("Score %d!", score(problem, solution))
 
 	write("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\output\\d_many_pizzas.out", solution)
 }
 
 func solveE() {
 	problem := read("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\input\\e_many_teams.in")
-	solution := solve_GetFirst(problem)
+	solution := solve_Anneal(problem)
 
 	validate(problem, solution)
-	score(problem, solution)
+	log.Printf("Score %d!", score(problem, solution))
 
 	write("C:\\Users\\Juris Liepins\\go\\src\\github.com\\jurisliepins\\google-hash-code-2021\\practice\\output\\e_many_teams.out", solution)
 }
 
 func main() {
-	solveA()
-	solveB()
-	solveC()
-	solveD()
-	solveE()
+	//solveA()
+	//solveB()
+	//solveC()
+	//solveD()
+	//solveE()
 }
